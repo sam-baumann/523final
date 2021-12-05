@@ -1,0 +1,16 @@
+SELECT
+  CONCAT('__label__', label, ', ', REGEXP_REPLACE(title, '(,)', ' '), ', ', REGEXP_REPLACE(body, '(\r|\n|\r\n|,)',' '))
+FROM (
+  SELECT
+    LOWER(JSON_EXTRACT_SCALAR(payload, '$.issue.labels[0].name')) AS label,
+    JSON_EXTRACT_SCALAR(payload, '$.issue.title') AS title,
+    JSON_EXTRACT_SCALAR(payload, '$.issue.body') AS body
+  FROM
+    `githubarchive.day.201802*`
+  WHERE
+    _TABLE_SUFFIX BETWEEN '01' AND '10'
+    AND type = 'IssuesEvent'
+    AND JSON_EXTRACT_SCALAR(payload, '$.action') = 'closed' )
+WHERE 
+  (label = 'bug' OR label = 'enhancement' OR label = 'question')
+  AND body != 'null';
